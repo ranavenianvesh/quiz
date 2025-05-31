@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Complete Multi-Type Quiz App with Skip & Music Fix</title>
+  <style>
+    /* same styling as before, omitted for brevity */
+    body {
+      background-color: #f0f8ff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      margin: 20px auto;
+      width: 60%;
+      text-align: center;
+    }
+    #quizPage {
+      background-color: #e0f7fa;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    #loginPage, #signupPage, #categoryPage {
+      background-color: #f3e5f5;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    #summaryPage {
+      background-color: #ffe0b2;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .hidden { display: none; }
+    #question { font-size: 1.5em; }
+    .option { margin: 10px 0; }
+    .result { margin-top: 20px; }
+    #timer { font-size: 1.2em; margin-top: 20px; }
+    #musicControls { margin-top: 10px; }
+    input[type="text"], input[type="password"] {
+      padding: 5px;
+      width: 80%;
+      font-size: 1.2em;
+      margin: 5px 0;
+    }
+    input[type="radio"] { margin-right: 10px; }
+    .history-entry { margin-bottom: 10px; }
+    .feedback { font-size: 1.5em; color: #00796b; margin-top: 20px; }
+    #overallTimer {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      background: #fff3e0;
+      padding: 10px 15px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+    }
+#categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.category {
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.category img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.category:hover {
+  transform: scale(1.05);
+  border-color: #4CAF50;
+  background-color: #e8f5e9;
+}
+.category.selected {
+  border-color: #4CAF50;
+  background-color: #e8f5e9;
+  transform: scale(1.05);
+}
+#categoryPage button {
+  display: block;
+  margin: 30px auto; /* centers horizontally and adds vertical spacing */
+  padding: 10px 30px;
+  font-size: 1.2em;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+#categoryPage button:hover {
+  background-color: #45a049;
+}
+
+  </style>
+</head>
+<body>
+
+<div class="container" id="loginPage">
+  <h2>Login</h2>
+  <input type="text" id="loginUsername" placeholder="Username" />
+  <input type="password" id="loginPassword" placeholder="Password" />
+  <br />
+  <button onclick="login()">Login</button>
+  <p>Don't have an account? <a href="#" onclick="togglePage('signup')">Sign up</a></p>
+</div>
+
+<div class="container hidden" id="signupPage">
+  <h2>Sign Up</h2>
+  <input type="text" id="signupUsername" placeholder="Username" />
+  <input type="password" id="signupPassword" placeholder="Password" />
+  <br />
+  <button onclick="signup()">Sign Up</button>
+  <p>Already have an account? <a href="#" onclick="togglePage('login')">Login</a></p>
+</div>
+
+
+<!-- Category Selection Page -->
+<div id="categoryPage" class="page">
+  <h2>Select a Category</h2>
+  <div id="categoryGrid" class="grid">
+    <div class="category" data-category="sports">
+      <img src="https://tse2.mm.bing.net/th/id/OIP.oHTxzNp0xQEJAXitEwnIIgHaDD?w=323&h=144&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="Sports">
+      <p>Sports</p>
+    </div>
+    <div class="category" data-category="reasoning">
+      <img src="https://tse2.mm.bing.net/th/id/OIP.0eTwJZJiEzRLMz5tdGS18QHaFh?w=230&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="Reasoning">
+      <p>Logical and Reasoning</p>
+    </div>
+    <div class="category" data-category="coding">
+      <img src="https://tse4.mm.bing.net/th/id/OIP.7Bey8DvDNP30EGDQS0EOngHaHa?w=145&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="Coding">
+      <p>Coding</p>
+    </div>
+    <div class="category" data-category="technology">
+      <img src="https://tse3.mm.bing.net/th/id/OIP.4x-QEH7CPHLH_WPm9nbowAHaE8?w=259&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="Technology">
+      <p>Technology</p>
+    </div>
+    <div class="category" data-category="history">
+      <img src="https://tse1.mm.bing.net/th/id/OIP.QJE5TE-Y0T5q0JHdyi44wgHaF7?w=234&h=187&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="History">
+      <p>General knowledge</p>
+     </div>
+</div>
+  <br /><br />
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+
+<div class="container hidden" id="quizPage">
+
+
+  <audio id="bgMusic" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+  </audio>
+
+  <h2 id="question">Question text</h2>
+  <div class="option" id="mcqOptions"></div>
+  <div class="option" id="trueFalseOptions"></div>
+  <div class="blank" id="fillBlank"></div>
+  <div class="match" id="matchPairs"></div>
+  <button id="submit" onclick="checkAnswer()">Submit</button>
+  <button id="skip" onclick="skipQuestion()">Skip</button>
+  <div class="result" id="result"></div>
+  <p id="timer">Time left: <span id="timeLeft">30</span> seconds</p>
+
+  <div id="musicControls">
+    <button onclick="toggleMusic()" id="musicButton">Play Music</button>
+  </div>
+</div>
+
+<div id="overallTimer">
+  Time Remaining: <span id="globalTime">60:00</span>
+</div>
+
+<div class="container hidden" id="summaryPage">
+  <h2>Quiz Completed!</h2>
+  <div id="summary"></div>
+  <div class="feedback" id="feedback"></div>
+  <h3>All Time Performance</h3>
+  <div id="allTimeHistory"></div>
+  <button onclick="restartQuiz()">Try Again</button>
+</div>
+
+<script>
+let users = JSON.parse(localStorage.getItem('users') || '{}');
+let currentUser = "";
+let selectedCategory = "sports";
+let quizData = [];
+let current = 0;
+let score = 0;
+
+let globalTimeSeconds = 60 * 60; // 60 minutes
+let globalTimerInterval;
+
+function togglePage(target) {
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("signupPage").classList.add("hidden");
+  document.getElementById("categoryPage").classList.add("hidden");
+  document.getElementById("quizPage").classList.add("hidden");
+  document.getElementById("summaryPage").classList.add("hidden");
+
+  if (target === "login") document.getElementById("loginPage").classList.remove("hidden");
+  else if (target === "signup") document.getElementById("signupPage").classList.remove("hidden");
+  else if (target === "category") document.getElementById("categoryPage").classList.remove("hidden");
+  else if (target === "quiz") document.getElementById("quizPage").classList.remove("hidden");
+  else if (target === "summary") document.getElementById("summaryPage").classList.remove("hidden");
+}
+
+document.querySelectorAll(".category").forEach(cat => {
+  cat.addEventListener("click", () => {
+    selectedCategory = cat.dataset.category;
+    // Visual feedback for selection, e.g. add a selected class
+    document.querySelectorAll(".category").forEach(c => c.classList.remove('selected'));
+    cat.classList.add('selected');
+  });
+});
+
+
+
+function signup() {
+  const uname = document.getElementById("signupUsername").value.trim();
+  const pwd = document.getElementById("signupPassword").value;
+  if (!uname || !pwd) return alert("All fields required.");
+  if (users[uname]) return alert("Username already exists.");
+  users[uname] = { password: pwd, history: [] };
+  localStorage.setItem("users", JSON.stringify(users));
+  alert("Signup successful! Please login.");
+  togglePage("login");
+}
+
+function login() {
+  const uname = document.getElementById("loginUsername").value.trim();
+  const pwd = document.getElementById("loginPassword").value;
+  if (!uname || !pwd) return alert("All fields required.");
+  if (!users[uname]) return alert("User not found.");
+  if (users[uname].password !== pwd) return alert("Incorrect password.");
+  currentUser = uname;
+  togglePage("category");
+}
+
+function startQuiz() {
+  togglePage("quiz");
+  current = 0;
+  score = 0;
+  quizData = allQuizzes[selectedCategory];
+
+  const music = document.getElementById("bgMusic");
+  music.pause();
+  music.currentTime = 0;
+
+  // Play music only after first user interaction to avoid autoplay block
+  function userInteracted() {
+    music.play().catch(() => { /* ignore errors */ });
+    document.getElementById("musicButton").textContent = "Pause Music";
+    window.removeEventListener("click", userInteracted);
+  }
+  window.addEventListener("click", userInteracted, { once: true });
+
+  showQuestion();
+  startGlobalTimer();
+  resetTimerPerQuestion();
+}
+
+function showQuestion() {
+  document.getElementById("result").textContent = "";
+  document.getElementById("mcqOptions").innerHTML = "";
+  document.getElementById("trueFalseOptions").innerHTML = "";
+  document.getElementById("fillBlank").innerHTML = "";
+  document.getElementById("matchPairs").innerHTML = "";
+
+  if (current >= quizData.length) {
+    endQuiz();
+    return;
+  }
+  const q = quizData[current];
+  document.getElementById("question").textContent = q.question;
+
+  if (q.type === "mcq") {
+    q.options.forEach(opt => {
+      const label = document.createElement("label");
+      label.innerHTML = `<input type="radio" name="answer" value="${opt}" /> ${opt}`;
+      label.classList.add("option");
+      document.getElementById("mcqOptions").appendChild(label);
+    });
+  } else if (q.type === "truefalse") {
+    ["True", "False"].forEach(val => {
+      const label = document.createElement("label");
+      label.innerHTML = `<input type="radio" name="answer" value="${val}" /> ${val}`;
+      label.classList.add("option");
+      document.getElementById("trueFalseOptions").appendChild(label);
+    });
+  } else if (q.type === "fillblank") {
+    document.getElementById("fillBlank").innerHTML =
+      `<input type="text" id="fillInput" placeholder="Type your answer here" />`;
+  } else if (q.type === "match") {
+    // Show pairs, but simplified: show left items, and dropdown for right
+    const container = document.getElementById("matchPairs");
+    container.innerHTML = "";
+    q.pairsLeft.forEach((leftItem, idx) => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <label>${leftItem}: 
+          <select id="match_${idx}">
+            <option value="">Select</option>
+            ${q.pairsRight.map(r => `<option value="${r}">${r}</option>`).join("")}
+          </select>
+        </label>`;
+      container.appendChild(div);
+    });
+  }
+  resetTimerPerQuestion();
+}
+
+function checkAnswer() {
+  const q = quizData[current];
+  let userAnswer;
+
+  if (q.type === "mcq" || q.type === "truefalse") {
+    const radios = document.querySelectorAll('input[name="answer"]');
+    userAnswer = null;
+    for (const r of radios) {
+      if (r.checked) {
+        userAnswer = r.value;
+        break;
+      }
+    }
+    if (userAnswer === null) return alert("Please select an answer.");
+    if (userAnswer.toLowerCase() === q.answer.toLowerCase()) {
+      score++;
+      document.getElementById("result").textContent = "Correct!";
+    } else {
+      document.getElementById("result").textContent = `Wrong! Correct answer: ${q.answer}`;
+    }
+  } else if (q.type === "fillblank") {
+    userAnswer = document.getElementById("fillInput").value.trim();
+    if (!userAnswer) return alert("Please enter your answer.");
+    if (userAnswer.toLowerCase() === q.answer.toLowerCase()) {
+      score++;
+      document.getElementById("result").textContent = "Correct!";
+    } else {
+      document.getElementById("result").textContent = `Wrong! Correct answer: ${q.answer}`;
+    }
+  } else if (q.type === "match") {
+    let allCorrect = true;
+    for (let i = 0; i < q.pairsLeft.length; i++) {
+      const sel = document.getElementById(`match_${i}`);
+      if (!sel.value || sel.value !== q.pairsRight[i]) {
+        allCorrect = false;
+        break;
+      }
+    }
+    if (allCorrect) {
+      score++;
+      document.getElementById("result").textContent = "Correct!";
+    } else {
+      document.getElementById("result").textContent = "Wrong! Correct pairs are shown.";
+    }
+  }
+  current++;
+  setTimeout(() => {
+    showQuestion();
+  }, 1500);
+}
+
+function skipQuestion() {
+  current++;
+  showQuestion();
+}
+
+function endQuiz() {
+  clearInterval(globalTimerInterval);
+  currentUser = currentUser || "guest";
+  togglePage("summary");
+  document.getElementById("summary").innerHTML = `<p>Your score: ${score} out of ${quizData.length}</p>`;
+  let feedback = "";
+  const percent = (score / quizData.length) * 100;
+  if (percent >= 80) feedback = "Excellent performance!";
+  else if (percent >= 50) feedback = "Good job, keep practicing!";
+  else feedback = "Better luck next time!";
+
+  document.getElementById("feedback").textContent = feedback;
+
+  if (!users[currentUser]) users[currentUser] = { password: "", history: [] };
+  users[currentUser].history.push({
+    category: selectedCategory,
+    score: score,
+    total: quizData.length,
+    date: new Date().toLocaleString(),
+  });
+  localStorage.setItem("users", JSON.stringify(users));
+  showHistory();
+  currentUser = ""; // reset user after quiz
+}
+
+function showHistory() {
+  const historyDiv = document.getElementById("allTimeHistory");
+  historyDiv.innerHTML = "";
+  let allEntries = [];
+
+  // Collect all user histories
+  for (const u in users) {
+    const userHist = users[u].history || [];
+    userHist.forEach(entry => {
+      allEntries.push({ user: u, ...entry });
+    });
+  }
+
+  allEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+  if (allEntries.length === 0) {
+    historyDiv.textContent = "No history available.";
+    return;
+  }
+  allEntries.slice(0,10).forEach(entry => {
+    const div = document.createElement("div");
+    div.classList.add("history-entry");
+    div.textContent = `${entry.date}: ${entry.user} scored ${entry.score}/${entry.total} in ${entry.category}`;
+    historyDiv.appendChild(div);
+  });
+}
+
+function endQuiz() {
+  clearInterval(globalTimerInterval);
+  currentUser = currentUser || "guest";
+  togglePage("summary");
+  
+  document.getElementById("summary").innerHTML = `
+    <p>User: <strong>${currentUser}</strong></p>
+    <p>Your score: ${score} out of ${quizData.length}</p>
+  `;
+
+  let feedback = "";
+  const percent = (score / quizData.length) * 100;
+  if (percent >= 80) feedback = "Excellent performance!";
+  else if (percent >= 50) feedback = "Good job, keep practicing!";
+  else feedback = "Better luck next time!";
+  document.getElementById("feedback").textContent = feedback;
+
+  if (!users[currentUser]) users[currentUser] = { password: "", history: [] };
+
+  // Add new history entry for this category attempt
+  users[currentUser].history.push({
+    category: selectedCategory,  // e.g., "Math", "Science", etc.
+    score: score,
+    total: quizData.length,
+    date: new Date().toLocaleString(),
+  });
+
+  localStorage.setItem("users", JSON.stringify(users));
+
+  // Show all history (all categories) for this user
+  showHistory(currentUser);
+
+  currentUser = ""; // reset user after quiz ends
+}
+
+function showHistory(username) {
+  const historyDiv = document.getElementById("allTimeHistory");
+  historyDiv.innerHTML = "";
+
+  if (!users[username] || !users[username].history || users[username].history.length === 0) {
+    historyDiv.textContent = "No history available.";
+    return;
+  }
+
+  let userHistory = users[username].history;
+
+  if (username === "guest") {
+    // For guest, only show history for the current category
+    userHistory = userHistory.filter(entry => entry.category === selectedCategory);
+  }
+
+  if (userHistory.length === 0) {
+    historyDiv.textContent = "No history available for this category.";
+    return;
+  }
+
+  // Sort by date descending
+  userHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  userHistory.forEach(entry => {
+    const div = document.createElement("div");
+    div.classList.add("history-entry");
+    div.textContent = `${entry.date}: Scored ${entry.score}/${entry.total} in category "${entry.category}"`;
+    historyDiv.appendChild(div);
+  });
+}
+// Cheat detection for desktop + mobile
+
+// When user switches away from the quiz tab or switches apps
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    alert('Warning: You switched away from the quiz. Cheating is not allowed!');
+    // TODO: Add logic to pause quiz, mark cheating, or end quiz
+    console.log('User switched tab/app or locked screen!');
+  }
+});
+
+// Detect page refresh or closing tab/window
+window.addEventListener('beforeunload', (e) => {
+  // Show a warning before leaving the page
+  e.preventDefault();
+  e.returnValue = ''; // Chrome requires this for showing the dialog
+});
+
+// Optional: Detect device orientation changes (mostly for mobile)
+window.addEventListener('orientationchange', () => {
+  alert('Orientation change detected! Please stay in the portrait mode for best experience.');
+});
+
+// Optional: You can also detect resize (sometimes triggered on mobile orientation change)
+window.addEventListener('resize', () => {
+  // You can check window.innerWidth/innerHeight and warn user
+  console.log('Window resized:', window.innerWidth, window.innerHeight);
+});
+
+// Example function you can call to mark cheating internally
+function markCheating() {
+  // For example, store flag in localStorage or send to backend
+  localStorage.setItem('cheated', 'true');
+  console.warn('User flagged as cheating!');
+}
+
+// You can call markCheating() inside the event listeners when cheating is detected
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    markCheating();
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  markCheating();
+});
+
+
+function restartQuiz() {
+  togglePage("category");
+  resetGlobalTimer();
+}
+
+function toggleMusic() {
+  const music = document.getElementById("bgMusic");
+  const btn = document.getElementById("musicButton");
+  if (music.paused) {
+    music.play();
+    btn.textContent = "Pause Music";
+  } else {
+    music.pause();
+    btn.textContent = "Play Music";
+  }
+}
+
+let questionTimer;
+const questionTimeLimit = 30;
+function resetTimerPerQuestion() {
+  clearInterval(questionTimer);
+  let timeLeft = questionTimeLimit;
+  document.getElementById("timeLeft").textContent = timeLeft;
+  questionTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timeLeft").textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(questionTimer);
+      alert("Time's up for this question. Moving to next question.");
+      skipQuestion();
+    }
+  }, 1000);
+}
+
+function startGlobalTimer() {
+  clearInterval(globalTimerInterval);
+  globalTimeSeconds = 60 * 60; // 60 minutes again
+  updateGlobalTimerDisplay();
+  globalTimerInterval = setInterval(() => {
+    globalTimeSeconds--;
+    updateGlobalTimerDisplay();
+    if (globalTimeSeconds <= 0) {
+      clearInterval(globalTimerInterval);
+      alert("Global time over! Quiz ended.");
+      endQuiz();
+    }
+  }, 1000);
+}
+
+function resetGlobalTimer() {
+  clearInterval(globalTimerInterval);
+  document.getElementById("globalTime").textContent = "60:00";
+}
+
+function updateGlobalTimerDisplay() {
+  const mins = Math.floor(globalTimeSeconds / 60);
+  const secs = globalTimeSeconds % 60;
+  document.getElementById("globalTime").textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+}
+
+// Cheat detection: If user switches tabs, logout and end quiz if quiz is running
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Only act if quiz page is visible (quiz running) and user logged in
+    if (!document.getElementById('quizPage').classList.contains('hidden') && currentUser) {
+      alert("Switching tabs is not allowed. You will be logged out and quiz ended.");
+      currentUser = "guest";
+      endQuiz();
+    }
+  }
+});
+
+// Sample quiz data
+const allQuizzes = {
+  sports: [
+    { question: "Which country won the FIFA World Cup in 2018?", type: "mcq", options: ["France", "Croatia", "Brazil", "Germany"], answer: "France" },
+    { question: "Is soccer played with a round ball?", type: "truefalse", answer: "True" },
+    { question: "Name the sport played on ice with sticks and a puck.", type: "fillblank", answer: "Ice hockey" },
+    { question: "Match the sport with the equipment: Football, Tennis, Basketball", type: "match", pairsLeft: ["Football", "Tennis", "Basketball"], pairsRight: ["Ball", "Racket", "Ball"] },
+    { question: "In which sport is the Golden Glove award given?", type: "mcq", options: ["Football", "Cricket", "Baseball", "Tennis"], answer: "Baseball" },
+    { question: "Is England known as the home of cricket?", type: "truefalse", answer: "True" },
+    { question: "How many players are on a standard football (soccer) team?", type: "fillblank", answer: "11 players" },
+    { question: "Match the sport with the country: Baseball, Taekwondo, Football", type: "match", pairsLeft: ["Baseball", "Taekwondo", "Football"], pairsRight: ["United States", "South Korea", "China"] },
+    { question: "In which year was the IPL first launched?", type: "mcq", options: ["2006", "2008", "2010", "2009"], answer: "2008" },
+    { question: "Did India win a bronze medal in Hockey in recent years?", type: "truefalse", answer: "True" },
+    { question: "In which year did India win its first Cricket World Cup?", type: "fillblank", answer: "1983" },
+    { question: "Match the team name with full form: DC, PBKS, SRH", type: "match", pairsLeft: ["DC", "PBKS", "SRH"], pairsRight: ["Delhi Capitals", "Punjab Kings", "Sunrisers Hyderabad"] },
+    { question: "Which team won the IPL cup in 2016?", type: "mcq", options: ["DC", "CSK", "SRH", "RCB"], answer: "SRH" },
+    { question: "Are there 4 rings on the Olympic flag?", type: "truefalse", answer: "False" },
+    { question: "Who is the Indian chess grandmaster in 2024 and currently?", type: "fillblank", answer: "Gukesh Dommaraju" },
+    { question: "Match the sport with the number of players: Kho-Kho, Water Polo, Rugby", type: "match", pairsLeft: ["Kho-Kho", "Water Polo", "Rugby"], pairsRight: ["9", "7", "15"] }, 
+    { question: "Who is the founder of the modern Olympic Games?", type: "mcq", options: ["Jesse Owens", "Pierre de Coubertin", "Carl Lewis", "Muhammad Ali"], answer: "Pierre de Coubertin" },
+    { question: "The International Cricket Council (ICC) is the governing body for cricket.", type: "truefalse", answer: "True" },
+    { question: "Which sport is played on ice with a puck?", type: "mcq", options: ["Hockey", "Football", "Tennis", "Basketball"], answer: "Hockey" },
+    { question: "In basketball, a free throw is worth 2 points", type: "truefalse", answer: "False" },
+  ],
+  reasoning: [
+   { question: "What comes next in the sequence? 2, 4, 6, ?", type: "mcq", options: ["7", "8", "10", "12"], answer: "8" },
+    { question: "The sky is blue. True or False?", type: "truefalse", answer: "True" },
+    { question: "Complete: A cat has ___ lives.", type: "fillblank", answer: "nine" },
+    { question: "Match the word with opposite: Hot, Cold, Happy", type: "match", pairsLeft: ["Hot", "Cold", "Happy"], pairsRight: ["Cold", "Hot", "Sad"], answer: ["Cold", "Hot", "Sad"]},
+    { question: "If all X are Y, what can be said about X?", type: "mcq", options: ["Universal ", "Particular", "X subset of Y", "Disjoint"], answer: "X subset of Y" },
+    { question: "Deductive reasoning involves making probabilistic conclusions.", type: "truefalse", answer: "False" },
+    { question: "If A implies B, and B implies C, then A implies _______________________.", type: "fillblank", answer: "C" },
+    { question: "What is the relationship between two identical statements?", type: "mcq", options: ["Contradictory", "Equivalent", "Contrary", "Disjoint"], answer: "Equivalent" },
+    { question: "A particular statement is always true.", type: "truefalse", answer: "False" },
+    { question: "What is the term for a logical argument that uses deductive reasoning?", type: "mcq", options: ["Syllogism", "Analogy", "Hypothesis", "Inference"], answer: "Syllogism" },
+    { question: "A syllogism is a type of inductive argument. ", type: "truefalse", answer: "Flase" },
+    { question: "A statement that is always true is called a _______________________.", type: "fillblank", answer: "Tautology" },    
+    { question: "What type of reasoning involves making generalizations from specific instances?", type: "mcq", options: ["Deductive", "Inductive", "Abductive", "Intuitive"], answer: "Intuitive" },   
+    { question: "Look at this series: 36, 34, 30, 28, 24, ... What number should come next?", type: "mcq", options: ["20", "22", "23", "26"], answer: "22" },
+    { question: "SCD, TEF, UGH, ____, WKL", type: "fillblank", answer: "VIJ" },
+    { question: "Which word does NOT belong with the others?", type: "mcq", options: ["yard", "centimeter", "inch", "ounce"], answer: "ounce" },
+    { question: "Odd one out", type: "mcq", options: ["bud", "tulip", "rose", "daisy"], answer: "bud" },
+    { question: "complete the following series JAK, KBL, LCM, MDN, _____", type: "mcq", options: ["OEP", "NEO", "MEN", "PFQ"], answer: "NEO" },
+ { question: "What comes next in the sequence? 33, 66, 99, ?", type: "mcq", options: ["1212", "2112", "122", "12"], answer: "1212" },
+    { question: "Match the ", type: "match", pairsLeft: ["The streets are wet.", "A is greater than B.", "All cats are mammals."], pairsRight: ["B is less than A.", "some mammals are cats", "Therefore it rained."], answer: ["Therefore it rained.", "B is less than A.", "some mammals are cats"]}
+  ],
+  coding: [
+    { question: "HTML is a markup language", type: "truefalse", answer: "True" },
+    { question: "Public static _________ main()", type: "fillblank", answer: "void" },
+    { question: "Match the following", type: "match", pairsLeft: ["Static", "Protect", "Enum"], pairsRight: ["Access Specifier", "Datatype", "Keyword"], answer: [ "Keyword", "Access Specifier", "Datatype"] },
+    { question: "Which language is primarily used for web development?", type: "mcq", options: ["Python", "JavaScript", "C++", "Java"], answer: "JavaScript" },
+    { question: "JavaScript is a compiled language. True or False?", type: "truefalse", answer: "False" },
+    { question: "Fill in: The symbol for comments in Python is ___", type: "fillblank", answer: "#" },
+    { question: "Match language to type: Python, HTML, JavaScript", type: "match", pairsLeft: ["Python", "HTML", "JavaScript"], pairsRight: ["Programming", "Markup", "Programming"] },
+    { question: "The keyword used to transfer control from a function back to the calling function is", type: "mcq", options: ["return", "goto", "go back", "switch"], answer: "return" },
+    { question: "THIS is the keyword in JAVA", type: "truefalse", answer: "True" },
+    { question: "Syntax of array in c is _____________.", type: "fillblank", answer: "data_type array_name[array_size];" },
+    { question: "Which is a reserved word in the Java programming language?", type: "mcq", options: ["method", "subclasses", "native", "reference"], answer: "native" },
+    { question: "What is the numerical range of a char?", type: "mcq", options: ["-128 to 127", "0 to 32767", "0 to 65535", "-(215) to (215) - 1"], answer: "0 to 65535" },
+    { question: "long datatype is used for _____________ in programming language.", type: "fillblank", answer: "large integer" },
+    { question: "Which is a valid declarations of a String?", type: "mcq", options: ["String s1 = null;", "String s2 = 'null';", "String s3 = (String) 'abc';", "String s4 = (String) '\ufeed';"], answer: "String s1 = null;" },
+    { question: "DTD is Document type data", type: "truefalse", answer: "False" },
+    { question: "CSS is ____________.", type: "fillblank", answer: "cascading style sheet" },
+    { question: "Which is not a datatype", type: "mcq", options: ["int", "char", "void", "stack"], answer: "stack" },
+    { question: "C++ is not a markup language", type: "truefalse", answer: "False" },
+     { question: "What is (void*)0?", type: "mcq", options: ["Representation of void pointer", "Representation of NULL pointer", "Error", "None of above"], answer: "Representation of NULL pointer" },
+    { question: "What function should be used to free the memory allocated by calloc() ?", type: "mcq", options: ["dealloc()", "malloc(variable_name, 0)", "free()", "memalloc(variable_name, 0)"], answer: "free()" }
+  ],
+  technology: [
+    { question: "What does CPU stand for?", type: "mcq", options: ["Central Process Unit", "Central Processing Unit", "Computer Personal Unit", "Central Processor Unit"], answer: "Central Processing Unit" },
+    { question: "Is HTML a programming language? True or False?", type: "truefalse", answer: "False" },
+    { question: "Fill in: RAM stands for ___ Access Memory", type: "fillblank", answer: "Random" },
+    { question: "Match tech term to meaning: HTTP, URL, IP", type: "match", pairsLeft: ["HTTP", "URL", "IP"], pairsRight: ["Protocol", "Address", "Address"] },
+    { question: "The following are components of a database except.", type: "mcq", options: ["user data", "metadata", "reports", "indexes"], answer: "reports" },
+    { question: " A firewall can protect against malware and viruses.", type: "truefalse", answer: "True" },
+    { question: "which devices  connects to a network and allows users to access the internet.", type: "fillblank", answer: "router" },
+    { question: "Match the following", type: "match", pairsLeft: ["Programming Language", "Web Browser", " Operating System"], pairsRight: ["Java", "Windows", "Chrome"], answer: ["JAVA", "Chrome", "Windows"] },
+    { question: "The first computer was the ENIAC", type: "truefalse", answer: "True" },
+    { question: " What is a firewall?", type: "mcq", options: ["Antivirus software", "Database management system", "Network security system", "Web browser"], answer: "Network security system" },
+    { question: " What is HTML used for?", type: "mcq", options: ["Styling", "Structuring content", "Database management", " Scripting"], answer: "Structuring content" },
+    { question: "Wi-Fi is a type of wireless communication technology", type: "truefalse", answer: "True" },
+    { question: "What is a browser?", type: "mcq", options: ["Operating system", "Network protocol", "Database management system", "Software application for accessing websites"], answer: "Software application for accessing websites" },
+    { question: "A type of software that allows users to create and modify", type: "fillblank", answer: "Database" },
+    { question: "What is RAM used for?", type: "mcq", options: ["Storage", "Processing", "Networking", "Temporary data storage"], answer: "Storage" },
+    { question: "RAM is a type of computer memory that can be written to and read from.", type: "truefalse", answer: "True" },
+    { question: "Cloud computing requires a constant internet connection.", type: "truefalse", answer: "True" },
+    { question: "which is not temparary memory?", type: "mcq", options: ["cache", "RAM", "ROM", "Buffer"], answer: "ROM" },
+    { question: "The first computer was the ENIAC", type: "truefalse", answer: "True" },
+    { question: "Match the following", type: "match", pairsLeft: ["Cloud Computing", "Artificial Intelligence", "Cybersecurity"], pairsRight: ["Firewall", " Distributed Computing", "Machine Learning"], answer: ["Distributed Computing", "Machine Learning", "Firewall"] },
+      ],
+history: [
+    {
+      type: "mcq",
+      question: "Who was the first President of the United States?",
+      options: ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "John Adams"],
+      answer: "George Washington"
+    },
+    {
+      type: "truefalse",
+      question: "The Great Wall of China was built in the 20th century.",
+      answer: "False"
+    },
+    {
+      type: "fillblank",
+      question: "The ___ Empire was known for its vast road system and ruled much of South America.",
+      answer: "Inca"
+    },
+    {
+      type: "match",
+      question: "Match the historical figures to their achievements.",
+      pairsLeft: ["Nelson Mandela", "Albert Einstein", "Leonardo da Vinci"],
+      pairsRight: ["Anti-apartheid leader", "Theory of Relativity", "Mona Lisa"],
+      answer: ["Anti-apartheid leader", "Theory of Relativity", "Mona Lisa"]
+    },
+    {
+     type:"mcq", 
+     question:"Which country is known as the Land of the Midnight Sun?", 
+     options: ["India","Japan","Iceland","Norway"],
+     answer: "Norway" },
+    {
+      type: "truefalse",
+      question: "Antarctic Desert is the largest desert in the world",
+      answer: "True"
+    },
+    {
+      type: "fillblank",
+      question: " In  __________ year India gain independence from British rule.",
+      answer: "1947"
+    },
+    {
+     type:"mcq", 
+     question:"Which country is known as the Land of Fire and Ice?", 
+     options: ["Denmark","Iceland","Greenland","Norway"],
+     answer: "Iceland" },
+     {
+      type: "match",
+      question: "Match the following ",
+      pairsLeft: ["Hydrogen", "Carbon ", "Oxygen","Sodium"],
+      pairsRight: ["C", "O2", "Na", "H"],
+      answer: ["H", "C", "O2", "Na"]
+    },
+   {
+      type: "truefalse",
+      question: "Rickets disorder is caused by the lack of vitamin D",
+      answer: "True"
+    },
+    {
+      type: "fillblank",
+      question: " ______________________ wrote the national song of India.",
+      answer: "Bankim Chandra Chatterjee"
+    },
+    {
+     type:"mcq", 
+     question:"What is the chemical symbol for water?", 
+     options: ["H2O","CO2","O2","N2"],
+     answer: "H2O" },
+    {
+      type: "truefalse",
+      question: "Africa is the largest continent in the world?",
+      answer: "False"
+    },
+    {
+      type: "match",
+      question: "Match the follwing",
+      pairsLeft: ["Goa", "Nagaland", "Ladakh"],
+      pairsRight: ["Leh", "Panaji", "Kohima"],
+      answer: ["Panaji", "Kohima", "Leh"]
+    },
+    {
+      type: "fillblank",
+      question: "Currency of Thailand is _________ ",
+      answer: "Thai Baht"
+    },
+    {
+     type:"mcq", 
+     question:"Which is the tallest mountain in the world", 
+     options: ["Makalu","K2","Mount Everest","Kangchenjunga"],
+     answer: "Mount Everest" },
+    {
+      type: "truefalse",
+      question: "Earth is flat",
+      answer: "False"
+    },
+    {
+      type: "fillblank",
+      question: " ________ bird can fly backwards.",
+      answer: "Hummingbird"
+    },
+    {
+     type:"mcq", 
+     question:"Which bird is the symbol of peace?", 
+     options: ["Swan","Pegion","Sparrow","Dove"],
+     answer: "Dove" },
+    {
+      type: "match",
+      question: "Match the following",
+      pairsLeft: ["City of joy", "pink city", "City of lakes", "Blue city"],
+      pairsRight: ["jaipur", "udaipur", "jodhpur", "kolkata"],
+      answer: ["Kolkata", "jaipur", "udaipur", "jodhpur"]
+    },
+  ]
+};
+
+togglePage("login"); // Show login initially
+</script>
+
+</body>
+</html>
